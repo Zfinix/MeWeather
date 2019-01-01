@@ -11,26 +11,26 @@ class Home extends StatefulWidget {
 
 // SingleTickerProviderStateMixin is used for animation
 class HomeState extends State<Home> {
-  
   String date = '';
-  String bg = 'assets/bg/rain.png';
+  var bg = 'assets/bg/clearday.png';
   String iconc = 'assets/weathercons/rain.png';
- 
+
   var desc = "";
   var city = "";
   var weatherx;
-  
+
   int humidity = 0;
   int pressure = 0;
   int temp = 0;
 
-  double humidity2 = 0; 
+  double humidity2 = 0;
   double pressure2 = 0;
   double windspeed = 0, windspeed2 = 0;
 
   @override
   void initState() {
     super.initState();
+    setBg();
     _loadWeatherData();
   }
 
@@ -305,29 +305,54 @@ class HomeState extends State<Home> {
       windspeed = d.wind.speed;
       windspeed2 = windspeed / 10;
 
+      DateTime now = new DateTime.now();
+      DateTime dated = new DateTime(now.year, now.month, now.day);
+
+      date =
+          "${dated.hour}:${dated.minute} am - ${dated.weekday}, ${dated.day} ${dated.month} ${dated.year} ";
+    });
+    print(bg);
+
+    // weatherx = c.main;
+  }
+
+  void setBg() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String response = prefs.getString('_weatherData');
+    print(prefs.getString('_weatherData') ?? "ERROR");
+
+    int i = 0;
+    List<Weather> list = List();
+
+    Map dataMap = jsonDecode(response);
+    var d = WeatherData.fromJson(dataMap);
+
+    list = d.weather;
+    setState(() {
+      bg = "";
       desc = list[i].main;
       int a = d.sys.sunrise;
       int b = d.sys.sunset;
       var night = false;
 
-      if (desc.contains("rain") || desc.contains("drizzle")) {
+      if (list[i].main.toLowerCase().contains("rain") || list[i].main.toLowerCase().contains("drizzle")) {
         bg = 'assets/bg/rain.png';
         iconc = 'assets/weathercons/rain.png';
-      }
-
-      if (desc.contains("thunder")) {
+      } else if (list[i].main.toLowerCase().contains("thunder")) {
         bg = 'assets/bg/thunder.png';
         iconc = 'assets/weathercons/thunder.png';
-      }
-
-      if (desc.contains("haze")) {
+      } else if (list[i].main.toLowerCase().contains("haze")) {
         bg = 'assets/bg/fog.png';
         iconc = 'assets/weathercons/fog.png';
-      }
-
-      if (desc.contains("day") || a > b) {
+      } else if (list[i].main.toLowerCase().contains("day")) {
         bg = 'assets/bg/clearday.png';
         iconc = 'assets/weathercons/clearsky.png';
+      } else if (list[i].main.toLowerCase().contains("snow") || temp < 0) {
+        bg = 'assets/bg/snow.png';
+        iconc = 'assets/weathercons/snow.png';
+      } else if (list[i].main.toLowerCase().contains("wind")) {
+        bg = 'assets/bg/wind.png';
+        iconc = 'assets/weathercons/wind.png';
       }
 
       if (a > b && temp > 40) {
@@ -335,29 +360,19 @@ class HomeState extends State<Home> {
         iconc = 'assets/weathercons/sunny.png';
       }
 
-      if (desc.contains("snow") || temp < 0) {
-        bg = 'assets/bg/snow.png';
-        iconc = 'assets/weathercons/snow.png';
-      }
-
-      if (desc.contains("wind")) {
-        bg = 'assets/bg/wind.png';
-        iconc = 'assets/weathercons/wind.png';
-      }
-
-      if (desc.contains("night") || a < b) {
-        bg = 'assets/bg/night.png';
-        night = true;
-        iconc = 'assets/weathercons/cloudy_night.png';
-      }
-
-      if (desc.contains("cloud") && a < b) {
-        bg = 'assets/bg/night.png';
-        night = true;
-        iconc = 'assets/weathercons/cloudy_night.png';
-      }
-
-      if (desc.contains("cloud") || a > b) {
+      /*   if (list[i].main.toLowerCase().contains("night") || a < b) {
+            bg = 'assets/bg/night.png';
+            night = true;
+            iconc = 'assets/weathercons/cloudy_night.png';
+          }
+    
+          if (list[i].main.toLowerCase().contains("cloud") && a < b) {
+            bg = 'assets/bg/night.png';
+            night = true;
+            iconc = 'assets/weathercons/cloudy_night.png';
+          }
+     */
+      if (list[i].main.toLowerCase().contains("cloud") || a > b) {
         bg = 'assets/bg/cloud.png';
         iconc = 'assets/weathercons/cloud.png';
       }
@@ -367,14 +382,6 @@ class HomeState extends State<Home> {
       if (night) {
         m = "pm";
       }
-
-      DateTime now = new DateTime.now();
-      DateTime dated = new DateTime(now.year, now.month, now.day);
-
-      date =
-          "${dated.hour}:${dated.minute} ${m} - ${dated.weekday}, ${dated.day} ${dated.month} ${dated.year} ";
     });
-
-    // weatherx = c.main;
   }
 }

@@ -9,6 +9,7 @@ import 'package:mewather/views/Home.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() => runApp(MyApp());
 
@@ -58,15 +59,8 @@ class SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
-
-    initPlatformState();
-
-    _locationSubscription =
-        _location.onLocationChanged().listen((Map<String, double> result) {
-      setState(() {
-        _currentLocation = result;
-      });
-    });
+    setBg();
+    _process();
   }
 
   void _loadWeatherData() async {
@@ -81,7 +75,8 @@ class SplashState extends State<Splash> {
         if (mounted) {
           setState(() {
             isLoading = false;
-            if (prefs.getString('_weatherData').contains("main")) {
+
+            if (prefs.getString('_weatherData') != "") {
               prefs.remove('_weatherData');
             }
 
@@ -128,7 +123,7 @@ class SplashState extends State<Splash> {
 
       error = null;
     } on PlatformException catch (e) {
-      if (lat.toString().isEmpty || long.toString().isEmpty) {
+      if (lat.toString() == "" || long.toString() == "") {
         lat = prefs.getDouble('_lat');
         long = prefs.getDouble('_long');
         if (lat != null && long != null) {
@@ -207,5 +202,79 @@ class SplashState extends State<Splash> {
             ]))
       ],
     );
+  }
+
+  void _process() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var latt = prefs.getDouble('_lat');
+    var longg = prefs.getDouble('_long');
+
+    var geoLocator = Geolocator();
+    var status = await geoLocator.checkGeolocationPermissionStatus();
+
+    if (status == GeolocationStatus.denied) {
+      if (latt != null && longg != null) {
+        _loadWeatherData();
+      } else {
+        initPlatformState();
+
+        _locationSubscription =
+            _location.onLocationChanged().listen((Map<String, double> result) {
+          setState(() {
+            _currentLocation = result;
+          });
+        });
+      }
+    } else if (status == GeolocationStatus.disabled) {
+      if (latt != null && longg != null) {
+        _loadWeatherData();
+      } else {
+        initPlatformState();
+
+        _locationSubscription =
+            _location.onLocationChanged().listen((Map<String, double> result) {
+          setState(() {
+            _currentLocation = result;
+          });
+        });
+      }
+    } else if (status == GeolocationStatus.restricted) {
+      if (latt != null && longg != null) {
+        _loadWeatherData();
+      } else {
+        initPlatformState();
+
+        _locationSubscription =
+            _location.onLocationChanged().listen((Map<String, double> result) {
+          setState(() {
+            _currentLocation = result;
+          });
+        });
+      }
+    } else if (status == GeolocationStatus.unknown) {
+      if (latt != null && longg != null) {
+        _loadWeatherData();
+      } else {
+        initPlatformState();
+
+        _locationSubscription =
+            _location.onLocationChanged().listen((Map<String, double> result) {
+          setState(() {
+            _currentLocation = result;
+          });
+        });
+      }
+    }
+    // Unknown
+    else if (status == GeolocationStatus.granted) {
+      initPlatformState();
+
+      _locationSubscription =
+          _location.onLocationChanged().listen((Map<String, double> result) {
+        setState(() {
+          _currentLocation = result;
+        });
+      });
+    }
   }
 }
